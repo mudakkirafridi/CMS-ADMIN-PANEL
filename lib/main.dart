@@ -1,9 +1,17 @@
 // import 'package:flutter/material.dart';
 
 import 'package:admin_test/build_widget.dart';
+import 'package:admin_test/firebase_options.dart';
+import 'package:admin_test/view_model/complaints_view_model.dart';
+import 'package:admin_test/view_model/userController.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:get/get_core/src/get_main.dart';
 
-void main() {
+void main() async{
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   runApp(AdminPanelApp());
 }
 
@@ -34,9 +42,9 @@ class AdminDashboard extends StatelessWidget {
         crossAxisCount: 2,
         padding: EdgeInsets.all(10),
         children: [
-          buildTile(context, "Users", Icons.people, UserManagementScreen()),
+          buildTile(context, "Users", Icons.people, UsersScreen()),
           buildTile(context, "Categories", Icons.category, CategoryManagementScreen()),
-          buildTile(context, "Complaints", Icons.report, ComplaintManagementScreen()),
+          buildTile(context, "Complaints", Icons.report, ComplaintsScreen()),
           buildTile(context, "Reports", Icons.analytics, ReportsScreen()),
           buildTile(context, "Notifications", Icons.notifications, NotificationScreen()),
           buildTile(context, "Settings", Icons.settings, SettingsScreen()),
@@ -63,24 +71,72 @@ class AdminDashboard extends StatelessWidget {
   }
 
 
-// Placeholder Screens for Navigation
-class ComplaintManagementScreen extends StatelessWidget {
-  const ComplaintManagementScreen({super.key});
+
+class ComplaintsScreen extends StatelessWidget {
+  final ComplaintsViewModel controller = Get.put(ComplaintsViewModel());
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(appBar: AppBar(title: Text("Complaint Management")), body: Center(child: Text("Manage Complaints Here")));
+    return Scaffold(
+      appBar: AppBar(title: Text('Complaints')),
+      body: Obx(() {
+        if (controller.isLoading.value) {
+          return Center(child: CircularProgressIndicator());
+        }
+        if (controller.complaints.isEmpty) {
+          return Center(child: Text('No complaints found'));
+        }
+        return ListView.builder(
+          itemCount: controller.complaints.length,
+          itemBuilder: (context, index) {
+            final complaint = controller.complaints[index];
+            return Card(
+              child: ListTile(
+                title: Text(complaint.title),
+                subtitle: Text(complaint.description),
+                trailing: Text(complaint.status.isEmpty ? 'Pending' : complaint.status),
+              ),
+            );
+          },
+        );
+      }),
+    );
   }
 }
 
-class UserManagementScreen extends StatelessWidget {
-  const UserManagementScreen({super.key});
+
+
+
+class UsersScreen extends StatelessWidget {
+  final UserController userController = Get.put(UserController());
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(appBar: AppBar(title: Text("User Management")), body: Center(child: Text("Manage Users Here")));
+    return Scaffold(
+      appBar: AppBar(title: Text('Users List')),
+      body: Obx(() {
+        if (userController.isLoading.value) {
+          return Center(child: CircularProgressIndicator());
+        }
+        if (userController.users.isEmpty) {
+          return Center(child: Text('No users found'));
+        }
+        return ListView.builder(
+          itemCount: userController.users.length,
+          itemBuilder: (context, index) {
+            var user = userController.users[index];
+            return ListTile(
+              title: Text(user.fullName),
+              subtitle: Text(user.email),
+              trailing: Text(user.academicLevel),
+            );
+          },
+        );
+      }),
+    );
   }
 }
+
 
 class CategoryManagementScreen extends StatelessWidget {
   const CategoryManagementScreen({super.key});
