@@ -2,6 +2,7 @@
 
 import 'package:admin_test/build_widget.dart';
 import 'package:admin_test/firebase_options.dart';
+import 'package:admin_test/view_model/complain_controller.dart';
 import 'package:admin_test/view_model/complaints_view_model.dart';
 import 'package:admin_test/view_model/userController.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -43,7 +44,7 @@ class AdminDashboard extends StatelessWidget {
         padding: EdgeInsets.all(10),
         children: [
           buildTile(context, "Users", Icons.people, UsersScreen()),
-          buildTile(context, "Categories", Icons.category, CategoryManagementScreen()),
+          buildTile(context, "Categories", Icons.category, ComplaintsCategoryScreen()),
           buildTile(context, "Complaints", Icons.report, ComplaintsScreen()),
           buildTile(context, "Reports", Icons.analytics, ReportsScreen()),
           buildTile(context, "Notifications", Icons.notifications, NotificationScreen()),
@@ -138,14 +139,32 @@ class UsersScreen extends StatelessWidget {
 }
 
 
-class CategoryManagementScreen extends StatelessWidget {
-  const CategoryManagementScreen({super.key});
+class ComplaintsCategoryScreen extends StatelessWidget {
+  final ComplaintController controller = Get.put(ComplaintController());
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(appBar: AppBar(title: Text("Category Management")), body: Center(child: Text("Manage Categories Here")));
+    controller.fetchUniqueCategoriesOnce(); // Fetch complaints when the screen loads
+
+    return Scaffold(
+      appBar: AppBar(title: Text("Categories")),
+      body: Obx(() {
+        if (controller.categories.isEmpty) {
+          return Center(child: CircularProgressIndicator());
+        }
+        return ListView.builder(
+          itemCount: controller.categories.length,
+          itemBuilder: (context, index) {
+            return ListTile(
+              title: Text(controller.categories[index].category),
+            );
+          },
+        );
+      }),
+    );
   }
 }
+
 
 class ReportsScreen extends StatelessWidget {
   const ReportsScreen({super.key});
