@@ -3,6 +3,7 @@
 import 'package:admin_test/build_widget.dart';
 import 'package:admin_test/firebase_options.dart';
 import 'package:admin_test/view_model/complain_controller.dart';
+import 'package:admin_test/view_model/complain_status_controller.dart';
 import 'package:admin_test/view_model/complaints_view_model.dart';
 import 'package:admin_test/view_model/userController.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -50,7 +51,7 @@ class AdminDashboard extends StatelessWidget {
           buildTile(context, "Notifications", Icons.notifications, NotificationScreen()),
           buildTile(context, "Settings", Icons.settings, SettingsScreen()),
           buildTile(context, "Assign Complaint", Icons.assignment, AssignComplaintScreen()),
-          buildTile(context, "Change Complaint Status", Icons.update, ChangeComplaintStatusScreen()),
+          buildTile(context, "Change Complaint Status", Icons.update, ComplaintStatusController()),
           buildTile(context, "View All Complaints", Icons.list, ViewAllComplaintsScreen()),
           buildTile(context, "View All Users", Icons.supervisor_account, ViewAllUsersScreen()),
           buildTile(context, "Block/Unblock Users", Icons.block, BlockUnblockUserScreen()),
@@ -277,14 +278,62 @@ class AssignComplaintScreen extends StatelessWidget {
   }
 }
 
-class ChangeComplaintStatusScreen extends StatelessWidget {
-  const ChangeComplaintStatusScreen({super.key});
+
+class ComplaintStatusController extends StatelessWidget {
+  final ComplaintStatusControllerView complaintController = Get.put(ComplaintStatusControllerView());
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(appBar: AppBar(title: Text("Change Complaint Status")), body: Center(child: Text("Change the complaint status")));
+    return Scaffold(
+      appBar: AppBar(title: Text("Complaints")),
+      body: Obx(() {
+        if (complaintController.complaints.isEmpty) {
+          return Center(child: Text("No complaints found."));
+        }
+
+        return ListView.builder(
+          itemCount: complaintController.complaints.length,
+          itemBuilder: (context, index) {
+            final complaint = complaintController.complaints[index];
+
+            return Card(
+              margin: EdgeInsets.all(8),
+              child: ListTile(
+                title: Text(complaint.title),
+                subtitle: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text("Category: ${complaint.category}"),
+                    Text("Sub-Category: ${complaint.subCategory}"),
+                    Text("Status: ${complaint.status}"),
+                  ],
+                ),
+                trailing: DropdownButton<String>(
+  value: (["Pending", "In Progress", "Resolved"].contains(complaint.status)) 
+      ? complaint.status 
+      : "Pending", // Set a default valid value
+  onChanged: (newStatus) {
+    if (newStatus != null) {
+      complaintController.updateComplaintStatus(complaint.id, newStatus);
+    }
+  },
+  items: ["Pending", "In Progress", "Resolved"].map((status) {
+    return DropdownMenuItem(
+      value: status,
+      child: Text(status),
+    );
+  }).toList(),
+),
+
+              ),
+            );
+          },
+        );
+      }),
+    );
   }
 }
+
 
 class ViewAllUsersScreen extends StatelessWidget {
   const ViewAllUsersScreen({super.key});
